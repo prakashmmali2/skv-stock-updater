@@ -46,13 +46,16 @@ for symbol in df["Yahoo Symbol"]:
 
 df["Last Close Price"] = new_prices
 
-# === Save to CSV (no formatting, ready for Excel filter) ===
+# === Save to CSV (no Change % column) ===
 output_file = "SKV_Sheet_1_Updated.csv"
 df.to_csv(output_file, index=False)
 
-print(f"✅ CSV saved at {datetime.now()} — open in Excel and apply filter on Last Close Price")
+print(f"✅ CSV saved at {datetime.now()} — open in Excel and apply filter on 'Last Close Price' column")
 
 if failed_symbols:
     print("\n⚠️ Failed to fetch:")
     for sym in sorted(set(failed_symbols)):
         print(" -", sym)
+
+# Prevent GitHub Actions JSON-to-Python errors
+execution_count = None
