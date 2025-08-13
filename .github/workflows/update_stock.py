@@ -3,9 +3,13 @@ import yfinance as yf
 import re
 import time
 from datetime import datetime
+import os
 
 # === Load Excel ===
-file_path = "SKV Sheet-1.xlsx"  # Uploaded file name
+file_path = "SKV Sheet-1.xlsx"  # Client must update this file in GitHub repo
+if not os.path.exists(file_path):
+    raise FileNotFoundError(f"❌ Excel file '{file_path}' not found in repo")
+
 df = pd.read_excel(file_path)
 
 # === Clean Yahoo Stock Symbols ===
@@ -46,7 +50,7 @@ for symbol in df["Yahoo Symbol"]:
 
 df["Last Close Price"] = new_prices
 
-# === Save to CSV (no Change % column) ===
+# === Save to CSV (GitHub output) ===
 output_file = "SKV_Sheet_1_Updated.csv"
 df.to_csv(output_file, index=False)
 
@@ -57,5 +61,4 @@ if failed_symbols:
     for sym in sorted(set(failed_symbols)):
         print(" -", sym)
 
-# Prevent GitHub Actions JSON-to-Python errors
 execution_count = None
