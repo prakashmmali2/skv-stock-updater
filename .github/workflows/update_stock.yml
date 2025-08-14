@@ -1,9 +1,10 @@
 name: Auto Update Stock Prices
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger
   schedule:
-    - cron: "*/5 * * * *"   # every 5 minutes
+    # Every 5 minutes Mon-Fri (09:00 - 15:30 IST approx)
+    - cron: "*/5 3-10 * * 1-5"  # UTC time for IST 9am-3:30pm
 
 jobs:
   update-stocks:
@@ -32,6 +33,6 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
+          git add SKV_Sheet_1_Updated.csv
           git commit -m "Auto update stock prices" || echo "No changes to commit"
           git push
