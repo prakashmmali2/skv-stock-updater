@@ -3,25 +3,18 @@ import yfinance as yf
 import re
 import time
 from datetime import datetime
-import requests
 
-# Google Sheet CSV export URL (publicly shared Google Sheet)
+# Public Google Sheet CSV export URL
 GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1kqm-XeSSFBPPSriL78N_pevRY6vHuhmEgRUL1KrwT6s/export?format=csv&gid=1334185550"
 
-INPUT_FILE = "SKV_Sheet_1.csv"
 OUTPUT_FILE = "SKV_Sheet_1_Updated.csv"
 
-# Download the CSV from Google Sheets
-response = requests.get(GOOGLE_SHEET_CSV_URL)
-if response.status_code != 200:
-    raise Exception(f"❌ Failed to download file from Google Drive (status: {response.status_code})")
-
-with open(INPUT_FILE, "wb") as f:
-    f.write(response.content)
-print(f"✅ Downloaded Google Sheet as '{INPUT_FILE}'")
-
-# Read CSV
-df = pd.read_csv(INPUT_FILE)
+# Read CSV directly from Google Sheets URL
+try:
+    df = pd.read_csv(GOOGLE_SHEET_CSV_URL)
+    print("✅ Loaded data directly from Google Sheets URL")
+except Exception as e:
+    raise Exception(f"❌ Failed to load data from Google Sheets: {e}")
 
 # Clean Yahoo Stock Symbols
 def clean_symbol(sym):
@@ -31,7 +24,7 @@ def clean_symbol(sym):
     sym = re.sub(r"^\$+", "", sym)
     sym = sym.replace("_", "-")
     sym = re.sub(r"[^A-Z0-9\-]", "", sym)
-    return sym + ".NS"  # NSE format
+    return sym + ".NS"
 
 df["Yahoo Symbol"] = df["Stock Name"].apply(clean_symbol)
 
