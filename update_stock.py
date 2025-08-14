@@ -9,14 +9,14 @@ GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1kqm-XeSSFBPPSriL
 
 OUTPUT_FILE = "SKV_Sheet_1_Updated.csv"
 
-# Read CSV directly from Google Sheets URL
+# Load the Google Sheet
 try:
     df = pd.read_csv(GOOGLE_SHEET_CSV_URL)
-    print("✅ Loaded data directly from Google Sheets URL")
+    print("✅ Loaded data from Google Sheets")
 except Exception as e:
     raise Exception(f"❌ Failed to load data from Google Sheets: {e}")
 
-# Clean Yahoo Stock Symbols
+# === Clean Yahoo Stock Symbols ===
 def clean_symbol(sym):
     if not isinstance(sym, str):
         return None
@@ -28,13 +28,27 @@ def clean_symbol(sym):
 
 df["Yahoo Symbol"] = df["Stock Name"].apply(clean_symbol)
 
+# === Add Target Price Column ===
+# Formula: Target = Entry - Stoploss, then ×5 + Entry
+def calculate_target(entry, stoploss):
+    try:
+        if pd.notna(entry) and pd.notna(stoploss):
+            diff = entry - stoploss
+            return round(entry + (diff * 5), 2)
+    except:
+        pass
+    return None
+
+df["Target Price"] = df.apply(lambda row: calculate_target(row.get("Entry Price"), row.get("Stoploss")), axis=1)
+
+# === Fetch Current Prices ===
 new_prices = []
 highlight = []
 failed_symbols = []
 
-for i, row in df.iterrows():
+for _, row in df.iterrows():
     symbol = row.get("Yahoo Symbol")
-    entry = row.get("Entry Price", None)
+    entry = row.get("Entry Price")
 
     if pd.isna(symbol):
         new_prices.append(None)
@@ -49,6 +63,8 @@ for i, row in df.iterrows():
         if not hist.empty:
             close_price = round(hist["Close"].dropna().iloc[-1], 2)
             new_prices.append(close_price)
+
+            # Highlight logic
             if pd.notna(entry):
                 diff_pct = ((close_price - entry) / entry) * 100
                 if diff_pct >= 2.5:
@@ -70,6 +86,7 @@ for i, row in df.iterrows():
 
     time.sleep(0.3)
 
+# Save results
 df["Last Close Price"] = new_prices
 df["Highlight"] = highlight
 
