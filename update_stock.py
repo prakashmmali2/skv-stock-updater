@@ -29,8 +29,8 @@ df["Yahoo Symbol"] = df["Stock Name"].apply(clean_symbol)
 
 # === Calculate Diff and Trg in-place ===
 df["Diff"] = df.apply(
-    lambda row: row["Entry Price"] - row["Stoploss"] 
-    if pd.notna(row["Entry Price"]) and pd.notna(row["Stoploss"]) else None,
+    lambda row: row["Entry Price"] - row["Stop Loss"] 
+    if pd.notna(row["Entry Price"]) and pd.notna(row["Stop Loss"]) else None,
     axis=1
 )
 
