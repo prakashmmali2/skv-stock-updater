@@ -38,7 +38,7 @@ df["Tgt"] = df["Diff"].apply(lambda x: round(x * 5, 2) if pd.notna(x) else None)
 
 # === Fetch Current Prices & Apply New Highlight Logic ===
 new_prices = []
-highligh = []   # ✅ Correct variable name
+highlight = []   # ✅ Correct variable name
 failed_symbols = []
 
 for _, row in df.iterrows():
@@ -47,7 +47,7 @@ for _, row in df.iterrows():
 
     if pd.isna(symbol):
         new_prices.append(None)
-        highligh.append("")
+        highlight.append("")
         continue
 
     try:
@@ -63,29 +63,29 @@ for _, row in df.iterrows():
             if pd.notna(entry) and entry != 0:
                 diff_pct = ((close_price - entry) / entry) * 100
                 if -2.5 <= diff_pct < 0:
-                    highligh.append("RED")
+                    highlight.append("RED")
                 elif 0 < diff_pct <= 2.5:
-                    highligh.append("GREEN")
+                    highlight.append("GREEN")
                 else:
-                    highligh.append("")
+                    highlight.append("")
             else:
-                highligh.append("")
+                highlight.append("")
         else:
             new_prices.append(None)
-            highligh.append("No data")
+            highlight.append("No data")
             failed_symbols.append(symbol)
     except Exception:
         new_prices.append(None)
-        highligh.append("Error")
+        highlight.append("Error")
         failed_symbols.append(symbol)
 
     time.sleep(0.3)
 
 # Store correct Highlight column in DataFrame
-df["Highligh"] = highligh
+df["Highlight"] = highlight
 
 # Remove last column (Highlight) before saving
-df.drop(columns=["Highligh"]).to_csv(OUTPUT_FILE, index=False)
+df.drop(columns=["Highlight"]).to_csv(OUTPUT_FILE, index=False)
 
 print(f"✅ Updated CSV saved at {datetime.now()}")
 
