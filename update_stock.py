@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 
 # === Load Excel ===
-file_path = "SKV Sheet-1.xlsx"  # Client must update this file in GitHub repo
+file_path = "SKV Sheet-1.csv"  # Client must update this file in GitHub repo
 if not os.path.exists(file_path):
     raise FileNotFoundError(f"❌ Excel file '{file_path}' not found in repo")
 
