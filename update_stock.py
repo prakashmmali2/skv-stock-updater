@@ -4,19 +4,18 @@ import re
 import time
 from datetime import datetime
 
-# Public Google Sheet CSV export URL
+# Constants
 GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1kqm-XeSSFBPPSriL78N_pevRY6vHuhmEgRUL1KrwT6s/export?format=csv&gid=1334185550"
-
 OUTPUT_FILE = "SKV_Sheet_1_Updated.csv"
 
-# Load the Google Sheet
+# Load Google Sheet
 try:
     df = pd.read_csv(GOOGLE_SHEET_CSV_URL)
     print("✅ Loaded data from Google Sheets")
 except Exception as e:
     raise Exception(f"❌ Failed to load data from Google Sheets: {e}")
 
-# === Clean Yahoo Stock Symbols ===
+# Clean Yahoo Stock Symbols
 def clean_symbol(sym):
     if not isinstance(sym, str):
         return None
@@ -28,20 +27,29 @@ def clean_symbol(sym):
 
 df["Yahoo Symbol"] = df["Stock Name"].apply(clean_symbol)
 
-# === Add Target Price Column ===
-# Formula: Target = Entry - Stoploss, then ×5 + Entry
-def calculate_target(entry, stoploss):
+# === Calculate Diff and Trg Columns ===
+
+def calculate_diff(entry, stoploss):
     try:
         if pd.notna(entry) and pd.notna(stoploss):
-            diff = entry - stoploss
-            return round(entry + (diff * 5), 2)
+            return round(entry - stoploss, 2)
     except:
         pass
     return None
 
-df["Target Price"] = df.apply(lambda row: calculate_target(row.get("Entry Price"), row.get("Stoploss")), axis=1)
+def calculate_trg(diff):
+    try:
+        if pd.notna(diff):
+            return round(diff * 5, 2)
+    except:
+        pass
+    return None
 
-# === Fetch Current Prices ===
+df["Diff"] = df.apply(lambda row: calculate_diff(row.get("Entry Price"), row.get("Stoploss")), axis=1)
+df["Trg"] = df["Diff"].apply(calculate_trg)
+
+# === Fetch Current Prices and Highlight ===
+
 new_prices = []
 highlight = []
 failed_symbols = []
