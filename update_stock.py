@@ -5,24 +5,25 @@ import time
 from datetime import datetime
 import requests
 
-# Constants
-CSV_URL = "https://docs.google.com/spreadsheets/d/1kqm-XeSSFBPPSriL78N_pevRY6vHuhmEgRUL1KrwT6s/export?format=csv&gid=1334185550"
-INPUT_FILE = "SKV_Sheet-1.csv"
+# Google Sheet CSV export URL (publicly shared Google Sheet)
+GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1kqm-XeSSFBPPSriL78N_pevRY6vHuhmEgRUL1KrwT6s/export?format=csv&gid=1334185550"
+
+INPUT_FILE = "SKV_Sheet_1.csv"
 OUTPUT_FILE = "SKV_Sheet_1_Updated.csv"
 
-# Download CSV from Google Sheets
-response = requests.get(CSV_URL)
+# Download the CSV from Google Sheets
+response = requests.get(GOOGLE_SHEET_CSV_URL)
 if response.status_code != 200:
     raise Exception(f"❌ Failed to download file from Google Drive (status: {response.status_code})")
 
-# Save the CSV locally for processing
 with open(INPUT_FILE, "wb") as f:
     f.write(response.content)
+print(f"✅ Downloaded Google Sheet as '{INPUT_FILE}'")
 
-# Read the CSV into pandas DataFrame
+# Read CSV
 df = pd.read_csv(INPUT_FILE)
 
-# === Clean Yahoo Stock Symbols ===
+# Clean Yahoo Stock Symbols
 def clean_symbol(sym):
     if not isinstance(sym, str):
         return None
@@ -34,7 +35,6 @@ def clean_symbol(sym):
 
 df["Yahoo Symbol"] = df["Stock Name"].apply(clean_symbol)
 
-# === Fetch Updated Prices ===
 new_prices = []
 highlight = []
 failed_symbols = []
@@ -75,15 +75,12 @@ for i, row in df.iterrows():
         highlight.append("Error")
         failed_symbols.append(symbol)
 
-    time.sleep(0.3)  # prevent hitting API limits
+    time.sleep(0.3)
 
-# Add columns to DataFrame
 df["Last Close Price"] = new_prices
 df["Highlight"] = highlight
 
-# Save updated DataFrame to CSV
 df.to_csv(OUTPUT_FILE, index=False)
-
 print(f"✅ Updated CSV saved at {datetime.now()}")
 
 if failed_symbols:
