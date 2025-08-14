@@ -27,14 +27,15 @@ def clean_symbol(sym):
 
 df["Yahoo Symbol"] = df["Stock Name"].apply(clean_symbol)
 
-# === Calculate Diff and Trg in-place ===
+# === Calculate Diff and Tgt in-place ===
 df["Diff"] = df.apply(
     lambda row: row["Entry Price"] - row["Stop Loss"] 
     if pd.notna(row["Entry Price"]) and pd.notna(row["Stop Loss"]) else None,
     axis=1
 )
 
-df["Trg"] = df["Diff"].apply(lambda x: round(x * 5, 2) if pd.notna(x) else None)
+# Fill values into existing "Tgt" column
+df["Tgt"] = df["Diff"].apply(lambda x: round(x * 5, 2) if pd.notna(x) else None)
 
 # === Fetch Current Prices ===
 new_prices = []
