@@ -1,35 +1,46 @@
+import os
+import requests
 import pandas as pd
 import yfinance as yf
 import re
 import time
 from datetime import datetime
-import os
 
-file_path = "SKV Sheet-1.csv"
-output_file = "SKV_Sheet_1_Updated.csv"
+# === Configuration ===
+GDRIVE_URL = "https://docs.google.com/spreadsheets/d/1kqm-XeSSFBPPSriL78N_pevRY6vHuhmEgRUL1KrwT6s/export?format=xlsx&gid=1334185550"
+EXCEL_FILE = "temp_download.xlsx"
+INPUT_FILE = "SKV Sheet-1.csv"
+OUTPUT_FILE = "SKV_Sheet_1_Updated.csv"
 
-if not os.path.exists(file_path):
-    raise FileNotFoundError(f"❌ CSV file '{file_path}' not found in repo")
+# === Step 1: Download Excel from Google Drive ===
+response = requests.get(GDRIVE_URL)
+if response.status_code != 200:
+    raise Exception(f"❌ Failed to download file from Google Drive (status: {response.status_code})")
 
-# Read the CSV correctly
-df = pd.read_csv(file_path)
+with open(EXCEL_FILE, "wb") as f:
+    f.write(response.content)
 
-# === Clean Yahoo Stock Symbols ===
+print("✅ Downloaded latest sheet from Google Drive")
+
+# === Step 2: Read Excel and convert to CSV ===
+df = pd.read_excel(EXCEL_FILE)
+df.to_csv(INPUT_FILE, index=False)
+print(f"✅ Saved downloaded Excel as CSV → {INPUT_FILE}")
+
+# === Step 3: Clean stock symbols ===
 def clean_symbol(sym):
-    if not isinstance(sym, str):
-        return None
-    sym = sym.strip().upper()
-    sym = re.sub(r"^\$+", "", sym)
-    sym = sym.replace("_", "-")
-    sym = re.sub(r"[^A-Z0-9\-]", "", sym)
-    return sym + ".NS"  # For NSE
+    if isinstance(sym, str):
+        sym = sym.strip().upper()
+        sym = re.sub(r"^\$+", "", sym)
+        sym = sym.replace("_", "-")
+        sym = re.sub(r"[^A-Z0-9\-]", "", sym)
+        return sym + ".NS"
+    return None
 
 df["Yahoo Symbol"] = df["Stock Name"].apply(clean_symbol)
 
-# === Fetch Updated Prices ===
-new_prices = []
-highlight = []
-failed_symbols = []
+# === Step 4: Fetch prices ===
+new_prices, highlights, failures = [], [], []
 
 for i, row in df.iterrows():
     symbol = row.get("Yahoo Symbol")
@@ -37,48 +48,37 @@ for i, row in df.iterrows():
 
     if pd.isna(symbol):
         new_prices.append(None)
-        highlight.append("")
+        highlights.append("")
         continue
 
     try:
-        ticker = yf.Ticker(symbol)
-        hist = ticker.history(period="1d")
+        hist = yf.Ticker(symbol).history(period="1d")
         if hist.empty:
-            hist = ticker.history(period="5d")
-        if not hist.empty:
-            close_price = round(hist["Close"].dropna().iloc[-1], 2)
-            new_prices.append(close_price)
-            if pd.notna(entry):
-                diff_pct = ((close_price - entry) / entry) * 100
-                if diff_pct >= 2.5:
-                    highlight.append("GREEN")
-                elif diff_pct <= -2.5:
-                    highlight.append("RED")
-                else:
-                    highlight.append("")
-            else:
-                highlight.append("")
+            hist = yf.Ticker(symbol).history(period="5d")
+
+        close_price = round(hist["Close"].dropna().iloc[-1], 2) if not hist.empty else None
+        new_prices.append(close_price)
+
+        if pd.notna(entry) and close_price is not None:
+            diff = (close_price - entry) / entry * 100
+            highlights.append("GREEN" if diff >= 2.5 else "RED" if diff <= -2.5 else "")
         else:
-            new_prices.append(None)
-            highlight.append("No data")
-            failed_symbols.append(symbol)
+            highlights.append("")
     except Exception as e:
         new_prices.append(None)
-        highlight.append("Error")
-        failed_symbols.append(symbol)
+        highlights.append("Error")
+        failures.append(symbol)
 
-    time.sleep(0.3)  # prevent rate limit
+    time.sleep(0.3)
 
-# Add columns
 df["Last Close Price"] = new_prices
-df["Highlight"] = highlight
+df["Highlight"] = highlights
 
-# Save output
-df.to_csv(output_file, index=False)
+# === Step 5: Save updated CSV ===
+df.to_csv(OUTPUT_FILE, index=False)
+print(f"✅ Output saved: {OUTPUT_FILE} at {datetime.now()}")
 
-print(f"✅ Updated CSV saved at {datetime.now()}")
-
-if failed_symbols:
-    print("\n⚠️ Failed to fetch prices for:")
-    for sym in sorted(set(failed_symbols)):
+if failures:
+    print("\n⚠️ Failed to fetch:")
+    for sym in sorted(set(failures)):
         print(" -", sym)
