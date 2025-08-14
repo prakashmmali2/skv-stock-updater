@@ -34,18 +34,20 @@ df["Diff"] = df.apply(
     axis=1
 )
 
-# Fill values into existing "Tgt" column
 df["Tgt"] = df["Diff"].apply(lambda x: round(x * 5, 2) if pd.notna(x) else None)
 
 # === Fetch Current Prices ===
 new_prices = []
+highlight = []
 failed_symbols = []
 
 for _, row in df.iterrows():
     symbol = row.get("Yahoo Symbol")
+    entry = row.get("Entry Price")
 
     if pd.isna(symbol):
         new_prices.append(None)
+        highlight.append("")
         continue
 
     try:
@@ -56,19 +58,38 @@ for _, row in df.iterrows():
         if not hist.empty:
             close_price = round(hist["Close"].dropna().iloc[-1], 2)
             new_prices.append(close_price)
+
+            # Highlight logic
+            if pd.notna(entry):
+                diff_pct = ((close_price - entry) / entry) * 100
+                if diff_pct >= 2.5:
+                    highlight.append("GREEN")
+                elif diff_pct <= -2.5:
+                    highlight.append("RED")
+                else:
+                    highlight.append("")
+            else:
+                highlight.append("")
         else:
             new_prices.append(None)
+            highlight.append("No data")
             failed_symbols.append(symbol)
     except Exception:
         new_prices.append(None)
+        highlight.append("Error")
         failed_symbols.append(symbol)
 
     time.sleep(0.3)
 
-# Save results
-df["Last Close Price"] = new_prices
+# Assign corrected column name
+df["Highlight"] = highlight
 
-df.to_csv(OUTPUT_FILE, index=False)
+# Apply filter — keep only rows where Highlight is not empty
+df_filtered = df[df["Highlight"].isin(["GREEN", "RED"])]
+
+# Remove "Highlight" column from saved CSV
+df_filtered.drop(columns=["Highlight"]).to_csv(OUTPUT_FILE, index=False)
+
 print(f"✅ Updated CSV saved at {datetime.now()}")
 
 if failed_symbols:
