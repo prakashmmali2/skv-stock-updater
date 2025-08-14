@@ -38,7 +38,7 @@ df["Tgt"] = df["Diff"].apply(lambda x: round(x * 5, 2) if pd.notna(x) else None)
 
 # === Fetch Current Prices & Apply New Highlight Logic ===
 new_prices = []
-highlight = []
+highligh = []
 failed_symbols = []
 
 for _, row in df.iterrows():
@@ -82,10 +82,10 @@ for _, row in df.iterrows():
     time.sleep(0.3)
 
 # Store highlight column in DataFrame
-df["Highlight"] = highlight
+df["Highligh"] = highligh
 
 # Remove last column (Highlight) before saving
-df.drop(columns=["Highlight"]).to_csv(OUTPUT_FILE, index=False)
+df.drop(columns=["Highligh"]).to_csv(OUTPUT_FILE, index=False)
 
 print(f"✅ Updated CSV saved at {datetime.now()}")
 
