@@ -1,10 +1,9 @@
 name: Auto Update Stock Prices
 
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:
   schedule:
-    # Every 5 minutes Mon-Fri (09:00 - 15:30 IST approx)
-    - cron: "*/5 3-10 * * 1-5"  # UTC time for IST 9am-3:30pm
+    - cron: "*/5 3-10 * * 1-5"
 
 jobs:
   update-stocks:
