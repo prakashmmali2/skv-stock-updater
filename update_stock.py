@@ -4,18 +4,18 @@ import re
 import time
 from datetime import datetime
 
-# Constants
+# Public Google Sheet CSV export URL
 GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1kqm-XeSSFBPPSriL78N_pevRY6vHuhmEgRUL1KrwT6s/export?format=csv&gid=1334185550"
 OUTPUT_FILE = "SKV_Sheet_1_Updated.csv"
 
-# Load Google Sheet
+# Load the Google Sheet
 try:
     df = pd.read_csv(GOOGLE_SHEET_CSV_URL)
     print("✅ Loaded data from Google Sheets")
 except Exception as e:
     raise Exception(f"❌ Failed to load data from Google Sheets: {e}")
 
-# Clean Yahoo Stock Symbols
+# === Clean Yahoo Stock Symbols ===
 def clean_symbol(sym):
     if not isinstance(sym, str):
         return None
@@ -27,8 +27,7 @@ def clean_symbol(sym):
 
 df["Yahoo Symbol"] = df["Stock Name"].apply(clean_symbol)
 
-# === Calculate Diff and Trg Columns ===
-
+# === Calculate Diff and Trg columns (overwrite existing columns) ===
 def calculate_diff(entry, stoploss):
     try:
         if pd.notna(entry) and pd.notna(stoploss):
@@ -48,8 +47,7 @@ def calculate_trg(diff):
 df["Diff"] = df.apply(lambda row: calculate_diff(row.get("Entry Price"), row.get("Stoploss")), axis=1)
 df["Trg"] = df["Diff"].apply(calculate_trg)
 
-# === Fetch Current Prices and Highlight ===
-
+# === Fetch Current Prices ===
 new_prices = []
 highlight = []
 failed_symbols = []
