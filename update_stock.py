@@ -17,28 +17,29 @@ except Exception as e:
 
 # === Clean Yahoo Stock Symbols ===
 def clean_symbol(sym):
-    if not isinstance(sym, str):
+    if not isinstance(sym, str) or not sym.strip():
         return None
     sym = sym.strip().upper()
     sym = re.sub(r"^\$+", "", sym)
     sym = sym.replace("_", "-")
     sym = re.sub(r"[^A-Z0-9\-]", "", sym)
-    return sym + ".NS"
+    if not sym.endswith(".NS"):
+        sym += ".NS"
+    return sym
 
 df["Yahoo Symbol"] = df["Stock Name"].apply(clean_symbol)
 
 # === Calculate Diff and Tgt in-place ===
 df["Diff"] = df.apply(
-    lambda row: row["Entry Price"] - row["Stop Loss"] 
+    lambda row: row["Entry Price"] - row["Stop Loss"]
     if pd.notna(row["Entry Price"]) and pd.notna(row["Stop Loss"]) else None,
     axis=1
 )
-
 df["Tgt"] = df["Diff"].apply(lambda x: round(x * 5, 2) if pd.notna(x) else None)
 
-# === Fetch Current Prices & Apply New Highlight Logic ===
+# === Fetch Current Prices ===
 new_prices = []
-highlight = []   # ✅ Correct variable name
+highlight = []
 failed_symbols = []
 
 for _, row in df.iterrows():
@@ -55,17 +56,18 @@ for _, row in df.iterrows():
         hist = ticker.history(period="1d")
         if hist.empty:
             hist = ticker.history(period="5d")
+
         if not hist.empty:
             close_price = round(hist["Close"].dropna().iloc[-1], 2)
             new_prices.append(close_price)
 
-            # New Highlight logic: -2.5% to 0 = RED, 0 to +2.5% = GREEN
-            if pd.notna(entry) and entry != 0:
+            # Highlight logic
+            if pd.notna(entry):
                 diff_pct = ((close_price - entry) / entry) * 100
-                if -2.5 <= diff_pct < 0:
-                    highlight.append("RED")
-                elif 0 < diff_pct <= 2.5:
+                if diff_pct >= 2.5:
                     highlight.append("GREEN")
+                elif diff_pct <= -2.5:
+                    highlight.append("RED")
                 else:
                     highlight.append("")
             else:
@@ -74,6 +76,7 @@ for _, row in df.iterrows():
             new_prices.append(None)
             highlight.append("No data")
             failed_symbols.append(symbol)
+
     except Exception:
         new_prices.append(None)
         highlight.append("Error")
@@ -81,14 +84,18 @@ for _, row in df.iterrows():
 
     time.sleep(0.3)
 
-# Store correct Highlight column in DataFrame
+# === Ensure Highlight column always exists ===
+df["Last Close Price"] = new_prices
 df["Highlight"] = highlight
 
-# Remove last column (Highlight) before saving
-df.drop(columns=["Highlight"]).to_csv(OUTPUT_FILE, index=False)
+if "Highlight" not in df.columns:
+    df["Highlight"] = ""  # Guarantee existence
 
+# Save results
+df.to_csv(OUTPUT_FILE, index=False)
 print(f"✅ Updated CSV saved at {datetime.now()}")
 
+# Print failed fetches
 if failed_symbols:
     print("\n⚠️ Failed to fetch prices for:")
     for sym in sorted(set(failed_symbols)):
