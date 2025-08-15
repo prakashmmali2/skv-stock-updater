@@ -35,7 +35,13 @@ df["Diff"] = df.apply(
     if pd.notna(row["Entry Price"]) and pd.notna(row["Stop Loss"]) else None,
     axis=1
 )
-df["Tgt"] = df["Diff"].apply(lambda x: round(x * 5, 2) if pd.notna(x) else None)
+
+df["Tgt"] = df.apply(
+    lambda row: round(row["Entry Price"] + (row["Diff"] * 5), 2) 
+    if pd.notna(row["Diff"]) and pd.notna(row["Entry Price"]) 
+    else None,
+    axis=1
+)
 
 # === Fetch Current Prices ===
 new_prices = []
@@ -64,10 +70,10 @@ for _, row in df.iterrows():
             # Highlight logic
             if pd.notna(entry):
                 diff_pct = ((close_price - entry) / entry) * 100
-                if diff_pct >= 2.5:
-                    highlight.append("GREEN")
-                elif diff_pct <= -2.5:
-                    highlight.append("RED")
+                if 0 <= diff_pct <= 2.5:
+                  highlight.append("GREEN")
+                elif -2.5 <= diff_pct <= 0:
+                  highlight.append("RED")
                 else:
                     highlight.append("")
             else:
