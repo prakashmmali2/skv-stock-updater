@@ -45,7 +45,8 @@ df["Tgt"] = df.apply(
 
 # === Fetch Current Prices ===
 new_prices = []
-highlight = []
+highlight_list = []
+highligh_list = []
 failed_symbols = []
 
 for _, row in df.iterrows():
@@ -54,7 +55,8 @@ for _, row in df.iterrows():
 
     if pd.isna(symbol):
         new_prices.append(None)
-        highlight.append("")
+        highlight_list.append("")
+        highligh_list.append("")
         continue
 
     try:
@@ -67,35 +69,45 @@ for _, row in df.iterrows():
             close_price = round(hist["Close"].dropna().iloc[-1], 2)
             new_prices.append(close_price)
 
-            # Highlight logic
+            # Apply same logic to both Highlight & Highligh
             if pd.notna(entry):
                 diff_pct = ((close_price - entry) / entry) * 100
                 if 0 <= diff_pct <= 2.5:
-                  highlight.append("GREEN")
+                    highlight_list.append("Green")
+                    highligh_list.append("Green")
                 elif -2.5 <= diff_pct <= 0:
-                  highlight.append("RED")
+                    highlight_list.append("Red")
+                    highligh_list.append("Red")
                 else:
-                    highlight.append("")
+                    highlight_list.append("")
+                    highligh_list.append("")
             else:
-                highlight.append("")
+                highlight_list.append("")
+                highligh_list.append("")
         else:
             new_prices.append(None)
-            highlight.append("No data")
+            highlight_list.append("No data")
+            highligh_list.append("No data")
             failed_symbols.append(symbol)
 
     except Exception:
         new_prices.append(None)
-        highlight.append("Error")
+        highlight_list.append("Error")
+        highligh_list.append("Error")
         failed_symbols.append(symbol)
 
     time.sleep(0.3)
 
-# === Ensure Highlight column always exists ===
+# === Update both columns ===
 df["Last Close Price"] = new_prices
-df["Highlight"] = highlight
+df["Highlight"] = highlight_list
+df["Highligh"] = highligh_list
 
+# Guarantee columns exist
 if "Highlight" not in df.columns:
-    df["Highlight"] = ""  # Guarantee existence
+    df["Highlight"] = ""
+if "Highligh" not in df.columns:
+    df["Highligh"] = ""
 
 # Save results
 df.to_csv(OUTPUT_FILE, index=False)
