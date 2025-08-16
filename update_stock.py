@@ -3,17 +3,26 @@ import yfinance as yf
 import re
 import time
 from datetime import datetime
+import urllib.error
 
 # Public Google Sheet CSV export URL
 GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1kqm-XeSSFBPPSriL78N_pevRY6vHuhmEgRUL1KrwT6s/export?format=csv&gid=1334185550"
 OUTPUT_FILE = "SKV_Sheet_1_Updated.csv"
 
-# Load the Google Sheet
-try:
-    df = pd.read_csv(GOOGLE_SHEET_CSV_URL)
-    print("✅ Loaded data from Google Sheets")
-except Exception as e:
-    raise Exception(f"❌ Failed to load data from Google Sheets: {e}")
+# === Load the Google Sheet with retry logic ===
+MAX_RETRIES = 5
+for attempt in range(1, MAX_RETRIES + 1):
+    try:
+        df = pd.read_csv(GOOGLE_SHEET_CSV_URL)
+        if df.empty:
+            raise ValueError("Google Sheet returned empty data")
+        print("✅ Loaded data from Google Sheets")
+        break
+    except (urllib.error.URLError, Exception) as e:
+        print(f"⚠️ Attempt {attempt} failed: {e}")
+        if attempt == MAX_RETRIES:
+            raise Exception(f"❌ Failed to load data from Google Sheets after {MAX_RETRIES} attempts: {e}")
+        time.sleep(5)  # wait before retrying
 
 # === Clean Yahoo Stock Symbols ===
 def clean_symbol(sym):
