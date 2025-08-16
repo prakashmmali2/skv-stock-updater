@@ -3,8 +3,8 @@ name: Auto Update Stock Prices
 on:
   workflow_dispatch:  # Allows manual run from GitHub Actions
   schedule:
-    - cron: "*/5 3-10 * * 1-5"  # Every 5 minutes, Mon–Fri (IST 9:00–15:30)
-
+    - cron: "*/5 1-17 * * 1-5"   # Every 5 minutes, Mon–Fri (IST 7:00–23:00 approx)
+    
 jobs:
   update-stocks:
     runs-on: ubuntu-latest
