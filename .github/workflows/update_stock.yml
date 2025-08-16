@@ -4,7 +4,7 @@ on:
   workflow_dispatch:  # Allows manual run from GitHub Actions
   schedule:
     
-    - cron: "*/5 1-17 * * *"   # Every 5 minutes, 7:00–23:00 IST, all days
+    - cron: "*/5 * * * *"   # Every 5 minutes, 7:00–23:00 IST, all days
     
 jobs:
   update-stocks:
