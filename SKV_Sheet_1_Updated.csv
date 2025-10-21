@@ -1,5 +1,5 @@
 Stock Name,Time Frame,Zone,Entry Price,Stop Loss,Legout Date,Validation Issue,Zone Perfection,Entry Date,Status,Diff,Qty,Tgt,Yahoo Symbol,Last Close Price,Highligh,Highlight
-ACC,2 HR,DZ,1773.0,1761.5,7/24/2023,All Ok Zone,Perfect Zone,,,11.5,4.347826087,1830.5,ACC.NS,,Error,Error
+ACC,2 HR,DZ,1773.0,1761.5,7/24/2023,All Ok Zone,Perfect Zone,,,11.5,4.347826087,1830.5,ACC.NS,1848.9,,
 ADANIENT,2 HR,DZ,1960.9,1944.2,5/22/2023,Legout Cover,Perfect Zone,,,16.700000000000045,2.994011976,2044.4,ADANIENT.NS,2549.9,,
 ADANIPORTS,2 HR,DZ,693.3,684.15,5/22/2023,All Ok Zone,Perfect Zone,,,9.149999999999977,5.464480874,739.05,ADANIPORTS.NS,1473.5,,
 APOLLOHOSP,2 HR,DZ,4897.3,4854.3,11-03-2023,MTF Not ok,Doubt Zone,,,43.0,1.162790698,5112.3,APOLLOHOSP.NS,8012.0,,
